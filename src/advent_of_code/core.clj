@@ -11,7 +11,7 @@
 
 (defn file-as-seq [file-path]
   (-> (slurp file-path)
-      (str/split  #"\n")))
+      (str/split #"\n")))
 
 (defn aoc1 []
   (->> (file-as-seq "resources/input-1.txt")
@@ -55,6 +55,50 @@
        (reduce add-coordinates-with-aim [0 0 0])
        drop-last
        (reduce *)))
+
+;;--- Day 3: Binary Diagnostic ---
+
+(defn bit-str-as-arr [bit-str]
+  (->> (str/split bit-str #"")
+       (map read-string)))
+
+(defn bit-arr-to-decimal [bit-arr]
+  (->> (map #(* %1 (Math/pow 2 %2)) (reverse bit-arr) (range))
+       (reduce +)))
+
+(defn rotate-2d-array [arr]
+  (reduce #(map conj %1 %2) (repeat []) arr))
+
+(defn aoc5 []
+  (->> (file-as-seq "resources/input-3.txt")
+       (map bit-str-as-arr)
+       rotate-2d-array
+       (map frequencies)
+       (map #(sort-by val %))
+       (map #(list (-> % first first) (-> % last first)))
+       rotate-2d-array
+       (map bit-arr-to-decimal)
+       (reduce *)
+       int))
+
+(defn filter-coll-with-pred [coll pred-fn]
+  (loop [i 0 bits coll]
+    (if (<= (count bits) 1)
+      (first bits)
+      (let [val (-> bits rotate-2d-array (nth i) frequencies pred-fn)]
+        (recur (+ i 1) (->> bits (filter #(= (nth % i) val))))))))
+
+(defn aoc6 []
+  (let [all-bits (->> (file-as-seq "resources/input-3.txt")
+                      (map bit-str-as-arr))
+        co2-filter #(if (<= (% 0) (% 1)) 0 1)
+        oxygen-filter #(if (>= (% 1) (% 0)) 1 0)
+        co2-scrubber (filter-coll-with-pred all-bits co2-filter)
+        oxygen-generator (filter-coll-with-pred all-bits oxygen-filter)]
+    (->> [co2-scrubber oxygen-generator]
+         (map bit-arr-to-decimal)
+         (reduce *)
+         int)))
 
 ;;------------------------------------------
 
