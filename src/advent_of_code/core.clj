@@ -130,10 +130,10 @@
         numbers (->> (str/split (nth input 0) #",")
                      (map read-string))
         boards (->> (drop 1 input)
-                   (map board-str-to-vec))
+                    (map board-str-to-vec))
         numbers-till-win (mapv #(numbers-till-bingo % numbers) boards)
         [winning-index numbers-count] (apply min-key second (map-indexed vector numbers-till-win))]
-(bingo-score (nth boards winning-index) (take numbers-count numbers))))
+    (bingo-score (nth boards winning-index) (take numbers-count numbers))))
 
 (defn aoc8 []
   (let [input (-> (slurp "resources/input-4.txt")
@@ -141,10 +141,71 @@
         numbers (->> (str/split (nth input 0) #",")
                      (map read-string))
         boards (->> (drop 1 input)
-                   (map board-str-to-vec))
+                    (map board-str-to-vec))
         numbers-till-win (mapv #(numbers-till-bingo % numbers) boards)
         [winning-index numbers-count] (apply max-key second (map-indexed vector numbers-till-win))]
-(bingo-score (nth boards winning-index) (take numbers-count numbers))))
+    (bingo-score (nth boards winning-index) (take numbers-count numbers))))
+
+;;--- Day 5: Hydrothermal Venture ---
+
+(defn input-str-to-points [input]
+  (->> (str/split input #"->")
+       (map #(str/split (str/trim %) #","))
+       (map #(map read-string %))))
+
+(defn vent-line [[x1 y1] [x2 y2]]
+  (cond
+    (= y1 y2) (->> (range (min x1 x2) (+ 1 (max x1 x2)))
+                   (map #(vector % y1)))
+    (= x1 x2) (->> (range (min y1 y2) (+ 1 (max y1 y2)))
+                   (map #(vector x1 %)))
+    :else '()))
+
+(defn mark-vent [board vent-ends vent-fn]
+  (loop [b board points (apply vent-fn vent-ends)]
+    (if (empty? points)
+      b
+      (recur (update-in b (first points) inc) (rest points)))))
+
+(defn aoc9 []
+  (let [all-vents (->> (file-as-seq "resources/input-5.txt")
+                       (map input-str-to-points))
+        initial-board (vec (repeat 1000 (vec (repeat 1000 0))))
+        final-board (loop [board initial-board vents all-vents]
+                      (if (empty? vents)
+                        board
+                        (recur (mark-vent board (first vents) vent-line) (rest vents))))]
+    (->> final-board
+         (reduce concat)
+         (filter #(> % 1))
+         count)))
+
+(defn vent-line-with-diag [[x1 y1] [x2 y2]]
+  (cond
+    (= y1 y2) (->> (range (min x1 x2) (+ 1 (max x1 x2)))
+                   (map #(vector % y1)))
+    (= x1 x2) (->> (range (min y1 y2) (+ 1 (max y1 y2)))
+                   (map #(vector x1 %)))
+    (= (Math/abs (- x1 x2)) (Math/abs (- y1 y2))) (let [x-sign (if (< x1 x2) 1 -1)
+                                                        y-sign (if (< y1 y2) 1 -1)]
+                                                    (map #(vector %1 %2)
+                                                         (range x1 (+ x2 x-sign) x-sign)
+                                                         (range y1 (+ y2 y-sign) y-sign)))
+    :else '()))
+
+(defn aoc10 []
+  (let [all-vents (->> (file-as-seq "resources/input-5.txt")
+                       (map input-str-to-points))
+        initial-board (vec (repeat 1000 (vec (repeat 1000 0))))
+        final-board (loop [board initial-board vents all-vents]
+                      (if (empty? vents)
+                        board
+                        (recur (mark-vent board (first vents) vent-line-with-diag) (rest vents))))]
+    (->> final-board
+         (reduce concat)
+         (filter #(> % 1))
+         count)))
+
 ;;------------------------------------------
 
 (defn all-answers []
