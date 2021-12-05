@@ -1,5 +1,6 @@
 (ns advent-of-code.core
   (:require [clojure.string :as str])
+  (:require [clojure.set :as set])
   (:gen-class))
 
 ;;--- Day 1: Sonar Sweep ---
@@ -100,6 +101,50 @@
          (reduce *)
          int)))
 
+;;--- Day 4: Giant Squid ---
+
+(defn board-str-to-vec [bingo-str]
+  (->> (str/split bingo-str #"\n")
+       (map #(->> (str/split (str/trim %) #"\s+")
+                  (map read-string)))))
+
+(defn numbers-till-bingo [board numbers]
+  (let [win-sets (->> (concat board (rotate-2d-array board))
+                      (map set))]
+    (loop [i 5]
+      (cond
+        (> i (count numbers)) nil
+        (some #(set/subset? % (set (take i numbers))) win-sets) i
+        :else (recur (+ i 1))))))
+
+(defn bingo-score [board numbers]
+  (let [marked (set/intersection (set numbers) (set (apply concat board)))
+        total-sum (->> board
+                       (apply concat)
+                       (reduce +))]
+    (* (last numbers) (- total-sum (reduce + marked)))))
+
+(defn aoc7 []
+  (let [input (-> (slurp "resources/input-4.txt")
+                  (str/split #"\n\n"))
+        numbers (->> (str/split (nth input 0) #",")
+                     (map read-string))
+        boards (->> (drop 1 input)
+                   (map board-str-to-vec))
+        numbers-till-win (mapv #(numbers-till-bingo % numbers) boards)
+        [winning-index numbers-count] (apply min-key second (map-indexed vector numbers-till-win))]
+(bingo-score (nth boards winning-index) (take numbers-count numbers))))
+
+(defn aoc8 []
+  (let [input (-> (slurp "resources/input-4.txt")
+                  (str/split #"\n\n"))
+        numbers (->> (str/split (nth input 0) #",")
+                     (map read-string))
+        boards (->> (drop 1 input)
+                   (map board-str-to-vec))
+        numbers-till-win (mapv #(numbers-till-bingo % numbers) boards)
+        [winning-index numbers-count] (apply max-key second (map-indexed vector numbers-till-win))]
+(bingo-score (nth boards winning-index) (take numbers-count numbers))))
 ;;------------------------------------------
 
 (defn all-answers []
