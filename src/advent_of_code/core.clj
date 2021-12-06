@@ -252,13 +252,16 @@
 ;;------------------------------------------
 
 (defn all-answers []
-  (->> (keys (ns-publics 'advent-of-code.core))
-       (filter #(str/starts-with? (str %) "aoc"))
-       sort
-       (mapv #((->> %
-                   (str "advent-of-code.core/")
-                   symbol
-                   resolve)))))
+  (let [aoc-fns (->> (keys (ns-publics 'advent-of-code.core))
+                     (filter #(str/starts-with? (str %) "aoc"))
+                     set)]
+    (->> (range 1 51)
+         (map #(str "aoc" %))
+         (filter #(contains? aoc-fns (symbol %)))
+         (mapv #((->> %
+                      (str "advent-of-code.core/")
+                      symbol
+                      resolve))))))
 
 (defn print-all-answers []
   (->> (all-answers)
