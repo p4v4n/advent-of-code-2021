@@ -206,13 +206,56 @@
          (filter #(> % 1))
          count)))
 
+;;--- Day 6: Lanternfish ---
+
+(defn next-timer [n]
+  (if (= n 0) 6 (- n 1)))
+
+(defn next-day-timers [current-day]
+  (let [next-day (map next-timer current-day)
+        zeros-count (->> current-day
+                         (filter #(= % 0))
+                         count)]
+    (->> (concat next-day (repeat zeros-count 8)))))
+
+(defn aoc11 []
+  (let [input (-> (slurp "resources/input-6.txt")
+                  str/trim
+                  (str/split #","))
+        timers (map read-string input)]
+    (loop [i 0 li timers]
+      (if (= i 80)
+        (count li)
+        (recur (inc i) (next-day-timers li))))))
+
+(defn map-key [f coll]
+  (reduce-kv (fn [m k v] (assoc m (f k) v)) (empty coll) coll))
+
+(defn next-day-timer-frequencies [current-day-frequencies]
+  (let [zeros-count (or (get current-day-frequencies 0) 0)
+        next-day (map-key dec current-day-frequencies)]
+    (-> (dissoc next-day -1)
+        (update 6 #(+ (if (nil? %) 0 %) zeros-count))
+        (update 8 #(+ (if (nil? %) 0 %) zeros-count)))))
+
+(defn aoc12 []
+  (let [input (-> (slurp "resources/input-6.txt")
+                  str/trim
+                  (str/split #","))
+        initial-timers (map read-string input)]
+    (loop [i 0 li (frequencies initial-timers)]
+      (if (= i 256)
+        (->> (map val li)
+             (reduce +))
+        (recur (inc i) (next-day-timer-frequencies li))))))
+
 ;;------------------------------------------
 
 (defn all-answers []
   (->> (keys (ns-publics 'advent-of-code.core))
        (filter #(str/starts-with? (str %) "aoc"))
        sort
-       (map #((->> %
+       (mapv #((->> %
                    (str "advent-of-code.core/")
                    symbol
                    resolve)))))
