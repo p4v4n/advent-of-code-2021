@@ -249,6 +249,43 @@
              (reduce +))
         (recur (inc i) (next-day-timer-frequencies li))))))
 
+;;--- Day 7: The Treachery of Whales ---
+
+(defn median [coll]
+  (let [c (count coll)
+        sorted-coll (sort coll)
+        mid-point (int (/ c 2))]
+    (if (odd? c)
+      (nth sorted-coll mid-point)
+      (/ (+ (nth sorted-coll mid-point) (nth sorted-coll (dec mid-point))) 2))))
+
+(defn aoc13 []
+  (let [input (-> (slurp "resources/input-7.txt")
+                  str/trim
+                  (str/split #","))
+        crab-positions (map read-string input)
+        crab-median (median crab-positions)]
+    (->> crab-positions
+         (map #(Math/abs (- % crab-median)))
+         (reduce +))))
+
+(defn mean [coll]
+  (/ (reduce + coll) (count coll)))
+
+(defn aoc14 []
+  (let [input (-> (slurp "resources/input-7.txt")
+                  str/trim
+                  (str/split #","))
+        crab-positions (map read-string input)
+        crab-mean-floor (Math/floor (float (mean crab-positions)))
+        crab-mean-ceil (Math/ceil (float (mean crab-positions)))
+        fuel-spent-fn (fn [x]
+                        (->> crab-positions
+                             (map #(Math/abs (- % x)))
+                             (map #(/ (* % (+ % 1)) 2))
+                             (reduce +)
+                             int))]
+    (min (fuel-spent-fn crab-mean-ceil) (fuel-spent-fn crab-mean-floor))))
 ;;------------------------------------------
 
 (defn all-answers []
